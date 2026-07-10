@@ -1,0 +1,98 @@
+
+
+@media (max-width: 980px) {
+  .hero-grid,
+  .page-hero .hero-grid,
+  .assessment-shell,
+  .contact-grid,
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-grid,
+  .category-grid,
+  .testimonial-grid,
+  .stats-grid,
+  .roadmap-grid,
+  .info-grid,
+  .objective-grid,
+  .stats-about-grid,
+  .career-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cta-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .nav-links {
+    position: absolute;
+    top: 78px;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem 1.2rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    transform: translateY(-120%);
+    transition: var(--transition);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .nav-links.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-actions .btn {
+    display: none;
+  }
+
+  .hero {
+    padding-top: 3rem;
+  }
+
+  .feature-grid,
+  .category-grid,
+  .testimonial-grid,
+  .stats-grid,
+  .roadmap-grid,
+  .info-grid,
+  .objective-grid,
+  .stats-about-grid,
+  .career-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    display: grid;
+  }
+
+  .section {
+    padding: 4.2rem 0;
+  }
+
+  .hero-card {
+    margin-top: 1rem;
+  }
+
+  .cta-card {
+    padding: 2rem;
+  }
+
+  .cookie-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
