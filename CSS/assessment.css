@@ -1,25 +1,25 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary:    #2563eb;
-            --primary-dk: #1d4ed8;
-            --accent:     #7c3aed;
-            --success:    #16a34a;
-            --bg:         #f1f5f9;
-            --card:       #ffffff;
-            --text:       #1e293b;
-            --muted:      #64748b;
-            --border:     #e2e8f0;
-            --radius:     12px;
-            --shadow:     0 4px 20px rgba(0,0,0,0.08);
-        }
+    --primary:    #36ada3;      /* teal accent – stays the same */
+    --primary-dk: #2d9a90;      /* darker teal for hover */
+    --accent:     #36ada3;      /* keep teal or use a complementary colour like #ffd700 */
+    --success:    #16a34a;      /* green – unchanged */
+    --bg:         #121358;      /* new dark navy background */
+    --card:       #1e1f4a;      /* slightly lighter dark card (or keep #fff if you prefer) */
+    --text:       #f0f4f8;      /* light grey for readable text */
+    --muted:      #a0a8c0;      /* lighter muted colour */
+    --border:     #2a2d6a;      /* dark border that fits the theme */
+    --radius:     12px;
+    --shadow:     0 4px 20px rgba(18, 19, 88, 0.4);
+}
 
-        body {
-            font-family: 'Open Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
+       body {
+    font-family: 'Open Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
 
         
         nav {

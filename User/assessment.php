@@ -29,20 +29,9 @@ if ($userRole === 'admin') {
 </head>
 <body>
 
-<!-- ── Navigation bar ───────────────────────────────────── -->
-<nav>
-    <a href="dashboard.php" class="nav-brand">
-        <img src="../Images/Logo.jpg" alt="Future Finder logo">
-        <span>| Smart Career Guidance System</span>
-    </a>
-    <div class="nav-user">
-        <!-- Display real logged-in user name from PHP session -->
-        <span id="navUsername"><?php echo $navName; ?></span>
-        <a href="dashboard.php">Dashboard</a>
-        <!-- Logout link — clears session and returns to login -->
-        <a href="../logout.php" style="color:#ef4444;">Logout</a>
-    </div>
-</nav>
+<?php require_once __DIR__ . '/../shared/navbar.php'; ?>
+    
+
 
 <div class="wrapper">
 
@@ -353,5 +342,8 @@ function escapeStr(str) {
 }
 
 </script>
+
+<?php require_once __DIR__ . '/../shared/footer.php'; ?>
+    
 </body>
 </html>
