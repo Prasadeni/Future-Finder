@@ -2,18 +2,15 @@
 
 session_start();
 
-// If user is not logged in, send them to the login page
-// $_SESSION['user_id'] is only set after successful login via login.php
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../login.html');
     exit;
 }
 
-// Read logged-in user's name to show in the navbar
 $navName = htmlspecialchars($_SESSION['first_name'] . ' ' . $_SESSION['last_name']);
 $userRole = $_SESSION['role'] ?? 'user';
 
-// Only 'user' role can do the assessment (not admin)
+
 if ($userRole === 'admin') {
     header('Location: ../admin.php');
     exit;
@@ -29,15 +26,13 @@ if ($userRole === 'admin') {
 </head>
 <body>
 
+<!--navigation bar-->
 <?php require_once __DIR__ . '/../shared/navbar.php'; ?>
-    
-
 
 <div class="wrapper">
 
     <!-- Page header -->
     <div class="page-header">
-        <h1>🎯 Career Assessment</h1>
         <p>Answer all 12 questions honestly. Each answer is scored and matched to a career path that suits you.</p>
     </div>
 
@@ -121,9 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch(err => showError('Could not load questions: ' + err.message));
 });
 
-// ── Create Assessment record in DB ───────────────────────
-// Calls start_assessment.php → INSERT INTO Assessments (UserID from session, Date, Status='in_progress')
-// Returns AssessmentID which is then sent with all answers on submit
+// Create Assessment record in DB
+
 function startAssessment() {
     fetch('../API/start_assessment.php', { method: 'POST' })
         .then(r => r.json())
@@ -141,7 +135,7 @@ function startAssessment() {
         .catch(err => console.log('start_assessment error:', err));
 }
 
-// ── Render a single question ─────────────────────────────
+// Render a single question ──
 function renderQuestion(idx) {
     const q = questions[idx];
     if (!q) return;
@@ -166,16 +160,16 @@ function renderQuestion(idx) {
     // Build option buttons — we show only the label string to the user
     // The scores object inside each option is used only by submit_assessment.php on the server
     const optionsHTML = opts.map((opt, i) => {
-        const label = typeof opt === 'object' ? opt.label : opt;
-        const isSelected = answers[q.QuestionID] === label;
-        return `
-        <label class="option-label ${isSelected ? 'selected' : ''}"
-               onclick="selectOption(this, '${escapeStr(label)}', ${q.QuestionID})">
-            <input type="radio" name="q${q.QuestionID}" value="${escapeStr(label)}" ${isSelected ? 'checked' : ''}>
-            <div class="option-indicator"></div>
-            <span class="option-letter">${letters[i]}.</span>
-            <span class="option-text">${label}</span>
-        </label>`;
+    const label = typeof opt === 'object' ? opt.label : opt;
+    const isSelected = answers[q.QuestionID] === label;
+    return `
+    <label class="option-label ${isSelected ? 'selected' : ''}"
+           onclick="selectOption(this, '${escapeStr(label)}', ${q.QuestionID})">
+        <input type="radio" name="q${q.QuestionID}" value="${escapeStr(label)}" ${isSelected ? 'checked' : ''}>
+        <div class="option-indicator"></div>
+        <span class="option-letter">${letters[i]}.</span>
+        <span class="option-text">${label}</span>
+    </label>`;
     }).join('');
 
     // Inject question card into page
@@ -210,9 +204,6 @@ function selectOption(labelEl, value, QuestionID) {
     // Mark chosen option
     labelEl.classList.add('selected');
 
-    // Save answer: key = QuestionID, value = the label string
-    // submit_assessment.php matches this label back to the options array
-    // to find the scores object, then multiplies by question weight
     answers[QuestionID] = value;
 
     document.getElementById('btnNext').disabled   = false;
@@ -222,7 +213,7 @@ function selectOption(labelEl, value, QuestionID) {
     hideAlert();
 }
 
-// ── Navigate forward ─────────────────────────────────────
+// Navigation forwad
 function nextQuestion() {
     const q = questions[currentIdx];
     if (!answers[q.QuestionID]) { showAlert(); return; }
@@ -231,7 +222,7 @@ function nextQuestion() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── Navigate backward ────────────────────────────────────
+// Navigation backward
 function prevQuestion() {
     if (currentIdx > 0) {
         currentIdx--;
@@ -240,10 +231,7 @@ function prevQuestion() {
     }
 }
 
-// ── Submit all answers ───────────────────────────────────
-// Sends AssessmentID + all answers to submit_assessment.php
-// PHP matches each answer label → options array → scores object
-// Multiplies scores by weight, sums per career, saves top 3 recommendations
+// Submit answers
 function submitAssessment() {
     const q = questions[currentIdx];
     if (!answers[q.QuestionID]) { showAlert(); return; }
@@ -292,7 +280,7 @@ function submitAssessment() {
     });
 }
 
-// ── Dot navigator ─────────────────────────────────────────
+// Dot navigator
 function buildDotNav() {
     const dotNav = document.getElementById('dotNav');
     dotNav.innerHTML = '';
@@ -316,7 +304,7 @@ function updateDotNav(activeIdx) {
     });
 }
 
-// ── Alert helpers ─────────────────────────────────────────
+// Alert
 function showAlert() {
     const a = document.getElementById('alertBox');
     a.classList.add('show');
@@ -324,7 +312,7 @@ function showAlert() {
 }
 function hideAlert() { document.getElementById('alertBox').classList.remove('show'); }
 
-// ── Error display ─────────────────────────────────────────
+// Error
 function showError(msg) {
     document.getElementById('questionArea').innerHTML = `
         <div class="state-box">
@@ -336,13 +324,14 @@ function showError(msg) {
         </div>`;
 }
 
-// ── HTML escape for attribute strings ────────────────────
+
 function escapeStr(str) {
     return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
 }
 
 </script>
 
+<!--footer-->
 <?php require_once __DIR__ . '/../shared/footer.php'; ?>
     
 </body>

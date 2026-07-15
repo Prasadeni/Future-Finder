@@ -13,7 +13,6 @@ function navActive($page, $current) {
 ?>
 
 <style>
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
 .ff-navbar *,
@@ -66,12 +65,11 @@ function navActive($page, $current) {
     gap: 48px;
     list-style: none;
     position: absolute;
-    left:50%;
+    left:63%;
     top:50%;
     transform: translate(-50%, -50%);
     width: auto;
     white-space: nowrap;
-
 }
 
 .ff-navbar .ff-links a {
@@ -111,16 +109,17 @@ function navActive($page, $current) {
     margin-left: auto;
 }
 
-.ff-navbar .ff-btn-login {
+/* ----- button styles for logout & retake ----- */
+.ff-navbar .ff-btn-logout {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0 20px;
     height: 38px;
     border-radius: 30px;
-    border: 2px solid #36ada3;
+    border: 2px solid rgba(255,255,255,0.25);
     background: transparent;
-    color: #ffffff !important;
+    color: rgba(255,255,255,0.85);
     font-family: 'Poppins', sans-serif;
     font-size: 13px;
     font-weight: 700;
@@ -128,15 +127,16 @@ function navActive($page, $current) {
     text-transform: uppercase;
     text-decoration: none;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
     white-space: nowrap;
 }
-.ff-navbar .ff-btn-login:hover {
-    background: rgba(54, 173, 163, 0.18);
-    color: #ffffff !important;
+.ff-navbar .ff-btn-logout:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border-color: rgba(255,255,255,0.5);
 }
 
-.ff-navbar .ff-btn-start {
+.ff-navbar .ff-btn-retake {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -156,54 +156,12 @@ function navActive($page, $current) {
     transition: background 0.2s, transform 0.15s;
     white-space: nowrap;
 }
-.ff-navbar .ff-btn-start:hover {
+.ff-navbar .ff-btn-retake:hover {
     background: #2d9992;
     transform: translateY(-1px);
 }
-.ff-navbar .ff-btn-start:active {
+.ff-navbar .ff-btn-retake:active {
     transform: scale(0.97);
-}
-
-.ff-navbar .ff-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #36ada3;
-    color: #fff;
-    font-family: 'Poppins', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border: 2px solid rgba(255,255,255,0.3);
-}
-.ff-navbar .ff-user-name {
-    font-family: 'Poppins', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255,255,255,0.8);
-    white-space: nowrap;
-}
-.ff-navbar .ff-btn-logout {
-    display: inline-flex;
-    align-items: center;
-    padding: 0 18px;
-    height: 38px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: transparent;
-    color: rgba(255,255,255,0.75);
-    font-family: 'Poppins', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.2s, color 0.2s;
-}
-.ff-navbar .ff-btn-logout:hover {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
 }
 
 .ff-navbar .ff-hamburger {
@@ -235,6 +193,7 @@ function navActive($page, $current) {
     transform: translateY(-7.5px) rotate(-45deg);
 }
 
+/* ----- mobile menu ----- */
 .ff-mobile-menu {
     display: none;
     flex-direction: column;
@@ -287,20 +246,31 @@ function navActive($page, $current) {
     background: rgba(255,255,255,0.1);
     margin: 6px 0;
 }
-.ff-mobile-menu .ff-btn-login {
-    border: 2px solid #36ada3;
-    color: #ffffff !important;
-    background: transparent;
+.ff-mobile-menu .ff-btn-logout-mobile,
+.ff-mobile-menu .ff-btn-retake-mobile {
+    display: block;
     text-align: center;
-    justify-content: center;
-    margin-top: 4px;
+    padding: 12px;
+    border-radius: 30px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
 }
-.ff-mobile-menu .ff-btn-start {
+.ff-mobile-menu .ff-btn-logout-mobile {
+    border: 2px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.85);
+    background: transparent;
+}
+.ff-mobile-menu .ff-btn-logout-mobile:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.ff-mobile-menu .ff-btn-retake-mobile {
     background: #36ada3;
-    color: #ffffff;
-    text-align: center;
-    justify-content: center;
-    margin-top: 4px;
+    color: #fff;
+}
+.ff-mobile-menu .ff-btn-retake-mobile:hover {
+    background: #2d9992;
 }
 
 @media (max-width: 1024px) {
@@ -342,21 +312,39 @@ function navActive($page, $current) {
 
 <nav class="ff-navbar" role="navigation" aria-label="Main navigation">
 
+    <!-- Logo -->
     <a href="index.php" class="ff-logo" aria-label="Future Finder home">
         <img src="../Images/logo.png" alt="Future Finder Logo">
     </a>
 
+    <!-- Central links (visible on desktop) -->
     <ul class="ff-links">
-        <li><a href="index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a></li>
-        <li><a href="about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a></li>
-        <li><a href="careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a></li>
+        <?php if ($isLoggedIn): ?>
+            <!-- For logged‑in users: Home + Dashboard -->
+            <li><a href="index.php"      <?= navActive('index.php',     $currentPage) ?>>Home</a></li>
+            <li><a href="dashboard.php"  <?= navActive('dashboard.php', $currentPage) ?>>Dashboard</a></li>
+        <?php else: ?>
+            <!-- For guests: Home + About Us + Careers -->
+            <li><a href="index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a></li>
+            <li><a href="about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a></li>
+            <li><a href="careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a></li>
+        <?php endif; ?>
     </ul>
 
+    <!-- Right‑side actions (desktop) -->
     <div class="ff-actions">
-            <a href="../login.html"      class="ff-btn-login">Login</a>
-            <a href="../User/before_assessment.php" class="ff-btn-start">Start Assessment</a>
+        <?php if ($isLoggedIn): ?>
+            <!-- Logged in: Logout (outline) + Retake Assessment (solid) -->
+            <a href="../logout.php" class="ff-btn-logout">Logout</a>
+            <a href="../User/assessment.php" class="ff-btn-retake">Retake Assessment</a>
+        <?php else: ?>
+            <!-- Guest: Login + Start Assessment -->
+            <a href="../login.html" class="ff-btn-logout" style="border-color:#36ada3; color:#fff;">Login</a>
+            <a href="../User/before_assessment.php" class="ff-btn-retake">Start Assessment</a>
+        <?php endif; ?>
     </div>
 
+    <!-- Hamburger button (mobile) -->
     <button class="ff-hamburger" id="ff-hamburger"
             aria-label="Toggle navigation" aria-expanded="false"
             aria-controls="ff-mobile-menu">
@@ -365,18 +353,29 @@ function navActive($page, $current) {
 
 </nav>
 
+<!-- Mobile Menu (hidden by default, toggled by hamburger) -->
 <div class="ff-mobile-menu" id="ff-mobile-menu" role="navigation" aria-label="Mobile navigation">
-    <a href="index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a>
-    <a href="about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a>
-    <a href="careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a>
-    
-    <div class="ff-mobile-divider"></div>
+    <?php if ($isLoggedIn): ?>
+        <a href="index.php"      <?= navActive('index.php',     $currentPage) ?>>Home</a>
+        <a href="dashboard.php"  <?= navActive('dashboard.php', $currentPage) ?>>Dashboard</a>
+        <div class="ff-mobile-divider"></div>
         <div class="ff-mobile-actions">
-            <a href="../login.html"      class="ff-btn-login">Login</a>
-            <a href="../User/before_assessment.php" class="ff-btn-start">Start Assessment</a>
+            <a href="../logout.php" class="ff-btn-logout-mobile">Logout</a>
+            <a href="../User/assessment.php" class="ff-btn-retake-mobile">Retake Assessment</a>
         </div>
+    <?php else: ?>
+        <a href="index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a>
+        <a href="about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a>
+        <a href="careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a>
+        <div class="ff-mobile-divider"></div>
+        <div class="ff-mobile-actions">
+            <a href="../login.html" class="ff-btn-logout-mobile">Login</a>
+            <a href="../User/before_assessment.php" class="ff-btn-retake-mobile">Start Assessment</a>
+        </div>
+    <?php endif; ?>
 </div>
 
+<!-- JavaScript for hamburger toggle -->
 <script>
 (function () {
     const hamburger  = document.getElementById('ff-hamburger');
