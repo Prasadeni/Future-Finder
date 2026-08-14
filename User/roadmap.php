@@ -1,0 +1,701 @@
+<?php
+
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../login.html');
+    exit;
+}
+
+$userRole = $_SESSION['role'] ?? 'user';
+if ($userRole === 'admin') {
+    header('Location: ../admin.php');
+    exit;
+}
+
+require_once '../Includes/db_connection.php';
+
+$userID = intval($_SESSION['user_id']);
+$firstName = htmlspecialchars($_SESSION['first_name']);
+
+// Get all careers for the dropdown selector
+$allCareers = mysqli_fetch_all(
+    mysqli_query($conn, "SELECT CareerID, Title FROM Careers ORDER BY Title ASC"),
+    MYSQLI_ASSOC
+);
+
+// Get user's top recommended career (default selection)
+$defaultCareerID = 0;
+$latestStmt = mysqli_prepare($conn,
+    "SELECT r.CareerID FROM Recommendations r
+     JOIN Assessments a ON r.AssessmentID = a.AssessmentID
+     WHERE a.UserID = ? AND a.Status = 'completed'
+     ORDER BY a.AssessmentID DESC, r.MatchScore DESC LIMIT 1"
+);
+mysqli_stmt_bind_param($latestStmt, 'i', $userID);
+mysqli_stmt_execute($latestStmt);
+$topRec = mysqli_stmt_get_result($latestStmt)->fetch_assoc();
+mysqli_stmt_close($latestStmt);
+
+if ($topRec) {
+    $defaultCareerID = intval($topRec['CareerID']);
+}
+
+// If no recommendation yet, use first career
+if ($defaultCareerID === 0 && !empty($allCareers)) {
+    $defaultCareerID = intval($allCareers[0]['CareerID']);
+}
+
+mysqli_close($conn);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Roadmap | Future Finder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- html2canvas for download-as-image feature -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* ── Variables ── */
+        :root {
+            --bg:        #121358;
+            --card:      #1a1b4b;
+            --card-lt:   #1e2060;
+            --primary:   #36ada3;
+            --primary-dk:#2d9a90;
+            --text:      #f0f4f8;
+            --muted:     #a0a8c0;
+            --border:    #2a2d6a;
+            --radius:    14px;
+            --shadow:    0 4px 24px rgba(10,11,60,0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Layout ── */
+        .page-wrap {
+            max-width: 880px;
+            margin: 32px auto;
+            padding: 0 20px 80px;
+        }
+
+        /* ── Page header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .page-header h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .page-header h1 span { color: var(--primary); }
+        .page-header p { font-size: 0.9rem; color: var(--muted); margin-top: 3px; }
+
+        /* ── Career selector row ── */
+        .selector-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .selector-row label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+        .selector-row select {
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+            flex: 1;
+            min-width: 200px;
+        }
+        .selector-row select:focus { border-color: var(--primary); }
+
+        /* Download button */
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--primary);
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .btn-download:hover { background: var(--primary-dk); transform: translateY(-1px); }
+        .btn-download:active { transform: scale(0.97); }
+
+        /* ── Career info card ── */
+        .career-info-card {
+            background: rgba(83,79,148,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            padding: 24px 28px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .career-icon-wrap {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: rgba(54,173,163,0.2);
+            border: 1.5px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .career-info h2 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .career-info .industry-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--primary);
+            background: rgba(54,173,163,0.15);
+            border: 1px solid rgba(54,173,163,0.3);
+            padding: 2px 10px;
+            border-radius: 99px;
+            margin-bottom: 8px;
+        }
+        .career-info p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 520px;
+        }
+        .total-time {
+            margin-left: auto;
+            text-align: center;
+            background: rgba(54,173,163,0.1);
+            border: 1.5px solid rgba(54,173,163,0.3);
+            border-radius: 12px;
+            padding: 14px 20px;
+            min-width: 100px;
+        }
+        .total-time .t-num {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+        .total-time .t-lbl {
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        /* ── Roadmap timeline ── */
+        /* Container that will be captured by html2canvas for download */
+        #roadmap-visual {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        /* Watermark header shown in downloaded image */
+        .roadmap-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+        .roadmap-header h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .roadmap-header p {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+        .roadmap-header .ff-badge {
+            margin-left: auto;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--primary);
+            background: rgba(54,173,163,0.1);
+            border: 1px solid rgba(54,173,163,0.3);
+            padding: 4px 12px;
+            border-radius: 99px;
+        }
+
+        /* Timeline vertical line */
+        .timeline {
+            position: relative;
+            padding-left: 48px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 18px;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            /* Gradient line matching the slide design: light blue top → dark blue bottom */
+            background: linear-gradient(to bottom, #7dd3fc, #36ada3, #1e3a8a);
+            border-radius: 3px;
+        }
+
+        /* Individual stage */
+        .stage {
+            position: relative;
+            margin-bottom: 20px;
+            animation: fadeInLeft 0.4s ease both;
+        }
+        .stage:nth-child(1) { animation-delay: 0.05s; }
+        .stage:nth-child(2) { animation-delay: 0.10s; }
+        .stage:nth-child(3) { animation-delay: 0.15s; }
+        .stage:nth-child(4) { animation-delay: 0.20s; }
+        .stage:nth-child(5) { animation-delay: 0.25s; }
+        .stage:nth-child(6) { animation-delay: 0.30s; }
+        .stage:last-child { margin-bottom: 0; }
+
+        /* Stage dot on the line */
+        .stage-dot {
+            position: absolute;
+            left: -36px;  /* sits on the timeline line */
+            top: 16px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid var(--card);
+            box-shadow: 0 0 0 2px var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: #fff;
+            z-index: 1;
+        }
+
+        /* Stage card — the pill/hexagon shape from the slide */
+        .stage-card {
+            background: linear-gradient(135deg, var(--card-lt), var(--card));
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+            cursor: default;
+        }
+        .stage-card:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+            box-shadow: 0 4px 20px rgba(54,173,163,0.15);
+        }
+
+        /* Stage left: number + icon pill — matches the coloured pill in slide */
+        .stage-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #1a4080, #1e5590);
+            border-radius: 10px;
+            padding: 10px 14px;
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+        .stage-pill .s-icon { font-size: 22px; }
+        .stage-pill .s-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+        }
+        .stage-pill .s-num {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Colour variations per stage number — matching slide gradient */
+        .stage:nth-child(1) .stage-pill { background: linear-gradient(135deg, #1e90c0, #1470a0); }
+        .stage:nth-child(2) .stage-pill { background: linear-gradient(135deg, #1a7eb0, #125f90); }
+        .stage:nth-child(3) .stage-pill { background: linear-gradient(135deg, #1560a0, #0e4880); }
+        .stage:nth-child(4) .stage-pill { background: linear-gradient(135deg, #124090, #0b3070); }
+        .stage:nth-child(5) .stage-pill { background: linear-gradient(135deg, #0e2e70, #082060); }
+        .stage:nth-child(6) .stage-pill { background: linear-gradient(135deg, #0a1f58, #061550); }
+
+        /* Stage right: title + description */
+        .stage-content { flex: 1; }
+        .stage-content .s-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .stage-content .s-desc {
+            font-size: 0.83rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* Time badge on right */
+        .stage-time {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .stage-time svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* ── Loading + error states ── */
+        .state-box {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .spinner {
+            width: 44px; height: 44px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-16px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── Action row ── */
+        .action-row {
+            display: flex;
+            gap: 14px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 24px;
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--muted);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        @media (max-width: 600px) {
+            .page-header h1 { font-size: 1.3rem; }
+            .career-info-card { flex-direction: column; }
+            .total-time { margin-left: 0; width: 100%; }
+            .stage-pill { min-width: 80px; }
+            #roadmap-visual { padding: 20px 14px; }
+            .timeline { padding-left: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+<?php
+    $currentPage = 'roadmap.php';
+    require_once __DIR__ . '/../shared/navbar.php';
+?>
+
+<div class="page-wrap">
+
+    <!-- Page header -->
+    <div class="page-header">
+        <div>
+            <h1>Career <span>Roadmap</span></h1>
+            <p>Your step-by-step learning path to achieve your career goal</p>
+        </div>
+    </div>
+
+    <!-- Career selector + download button -->
+    <div class="selector-row">
+        <label for="careerSelect">Select Career:</label>
+        <select id="careerSelect" onchange="loadRoadmap(this.value)">
+            <?php foreach ($allCareers as $c): ?>
+            <option value="<?= $c['CareerID'] ?>"
+                <?= $c['CareerID'] == $defaultCareerID ? 'selected' : '' ?>>
+                <?= htmlspecialchars($c['Title']) ?>
+            </option>
+            <?php endforeach; ?>
+        </select>
+        <button class="btn-download" onclick="downloadRoadmap()">
+            Download Roadmap
+        </button>
+    </div>
+
+    <!-- Career info banner -->
+    <div class="career-info-card" id="careerInfoCard">
+        <div class="career-icon-wrap" id="careerIcon">🎯</div>
+        <div class="career-info">
+            <div class="industry-tag" id="careerIndustry">Loading...</div>
+            <h2 id="careerTitle">Loading career...</h2>
+            <p id="careerDesc"></p>
+        </div>
+        <div class="total-time">
+            <div class="t-num" id="totalMonths">—</div>
+            <div class="t-lbl">Total<br>Months</div>
+        </div>
+    </div>
+
+    <!-- Roadmap visual (captured for download) -->
+    <div id="roadmap-visual">
+        <!-- Header shown in downloaded image -->
+        <div class="roadmap-header">
+            <div>
+                <h3 id="rm-title">Career Roadmap</h3>
+                <p id="rm-sub">Future Finder — Smart Career Guidance System</p>
+            </div>
+            <div class="ff-badge">futurefinder.lk</div>
+        </div>
+
+        <!-- Timeline stages injected here by JS -->
+        <div class="timeline" id="timeline">
+            <div class="state-box">
+                <div class="spinner"></div>
+                <p style="color:var(--muted)">Loading roadmap...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-row">
+        <a href="dashboard.php" class="btn-outline">Dashboard</a>
+        <a href="results.php"   class="btn-outline">My Results</a>
+        <a href="before_assessment.php"class="btn-outline">Retake Assessment</a>
+    </div>
+
+</div>
+
+<?php require_once __DIR__ . '/../shared/footer.php'; ?>
+
+<script>
+// ── Career icon map (emoji per career title keyword) ─────────
+const iconMap = {
+    'Software':    '💻',
+    'Web':         '🌐',
+    'UI':          '🎨',
+    'Network':     '📡',
+    'Project':     '📋',
+    'Cyber':       '🔐',
+    'DevOps':      '🐳',
+    'Data':        '📊',
+    'Product':     '💡',
+    'Marketing':   '📣',
+    'Business':    '📋',
+    'QA':          '🧪',
+    'HR':          '👥',
+    'Database':    '🗄️',
+    'Frontend':    '⚛️',
+};
+
+function getCareerIcon(title) {
+    for (const [key, icon] of Object.entries(iconMap)) {
+        if (title.includes(key)) return icon;
+    }
+    return '🎯';
+}
+
+// ── Load roadmap for selected career ─────────────────────────
+function loadRoadmap(careerID) {
+    // Show loading state
+    document.getElementById('timeline').innerHTML = `
+        <div class="state-box">
+            <div class="spinner"></div>
+            <p style="color:var(--muted)">Loading roadmap...</p>
+        </div>`;
+
+    // Fetch from get_roadmap.php API
+    fetch('../API/get_roadmap.php?career_id=' + careerID)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                document.getElementById('timeline').innerHTML =
+                    `<div class="state-box"><p style="color:var(--muted)">No roadmap found for this career yet.</p></div>`;
+                return;
+            }
+            renderRoadmap(data.career, data.stages);
+        })
+        .catch(err => {
+            document.getElementById('timeline').innerHTML =
+                `<div class="state-box"><p style="color:#f87171">Error loading roadmap. Check XAMPP is running.</p></div>`;
+        });
+}
+
+// ── Render the roadmap ────────────────────────────────────────
+function renderRoadmap(career, stages) {
+    // Update career info banner
+    const icon = getCareerIcon(career.Title);
+    document.getElementById('careerIcon').textContent    = icon;
+    document.getElementById('careerTitle').textContent   = career.Title;
+    document.getElementById('careerIndustry').textContent= career.Industry || 'Technology';
+    document.getElementById('careerDesc').textContent    = career.Description || '';
+
+    // Update roadmap header (shown in downloaded image)
+    document.getElementById('rm-title').textContent = career.Title + ' — Career Roadmap';
+
+    // Calculate total months
+    let totalMonths = 0;
+    stages.forEach(s => {
+        const match = (s.EstimatedTime || '').match(/(\d+)/);
+        if (match) totalMonths += parseInt(match[1]);
+    });
+    document.getElementById('totalMonths').textContent = totalMonths;
+
+    // Build stage HTML
+    const html = stages.map((stage, i) => `
+        <div class="stage">
+            <div class="stage-dot">${stage.StageNumber}</div>
+            <div class="stage-card">
+                <div class="stage-pill">
+                    <div class="s-icon">${stage.Icon || '📌'}</div>
+                    <div>
+                        <div class="s-num">Stage ${stage.StageNumber}</div>
+                        <div class="s-label">${truncate(stage.Title, 16)}</div>
+                    </div>
+                </div>
+                <div class="stage-content">
+                    <div class="s-title">${stage.Title}</div>
+                    <div class="s-desc">${stage.Description}</div>
+                </div>
+                <div class="stage-time">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    ${stage.EstimatedTime}
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('timeline').innerHTML = html || `
+        <div class="state-box">
+            <p style="color:var(--muted)">No roadmap stages found for this career.</p>
+        </div>`;
+}
+
+// ── Truncate text helper ──────────────────────────────────────
+function truncate(str, max) {
+    return str && str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+// ── Download roadmap as PNG image ─────────────────────────────
+// Uses html2canvas to capture #roadmap-visual and trigger download
+function downloadRoadmap() {
+    const btn = document.querySelector('.btn-download');
+    btn.textContent = '⏳ Generating...';
+    btn.disabled    = true;
+
+    const element = document.getElementById('roadmap-visual');
+
+    html2canvas(element, {
+        backgroundColor: '#1a1b4b',   // match --card colour
+        scale: 2,                      // 2x for high-res / retina
+        useCORS: true,
+        logging: false,
+    }).then(canvas => {
+        // Create download link
+        const link      = document.createElement('a');
+        const careerName= document.getElementById('careerTitle').textContent
+                            .replace(/[^a-zA-Z0-9]/g, '_');
+        link.download   = 'Career_Roadmap_' + careerName + '.png';
+        link.href       = canvas.toDataURL('image/png');
+        link.click();
+
+        btn.innerHTML   = '⬇️ Download Roadmap';
+        btn.disabled    = false;
+    }).catch(err => {
+        alert('Download failed: ' + err.message);
+        btn.innerHTML = '⬇️ Download Roadmap';
+        btn.disabled  = false;
+    });
+}
+
+// ── On page load: show default career roadmap ─────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const defaultID = <?= $defaultCareerID ?>;
+    if (defaultID > 0) {
+        loadRoadmap(defaultID);
+    } else {
+        document.getElementById('timeline').innerHTML =
+            `<div class="state-box">
+                <p style="color:var(--muted)">Complete your assessment first to see a recommended roadmap.</p>
+                <a href="assessment.php" style="color:var(--primary);margin-top:12px;display:inline-block;">
+                    → Take Assessment
+                </a>
+             </div>`;
+    }
+});
+</script>
+
+</body>
+</html>
