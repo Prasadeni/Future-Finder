@@ -115,7 +115,7 @@ $initials  = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
     <aside class="sidebar">
         <div class="sidebar-label">Navigation</div>
         <a href="dashboard.php"  class="sidebar-item active">📊 Dashboard</a>
-        <a href="assessment.php" class="sidebar-item">🎯 Take Assessment</a>
+        <a href="before_assessment.php" class="sidebar-item">🎯 Take Assessment</a>
         <a href="results.php"    class="sidebar-item">⭐ View Results</a>
         <a href="roadmap.php"    class="sidebar-item">Career Roadmap</a>
         <div class="sidebar-label" style="margin-top:16px;">Coming Soon</div>
