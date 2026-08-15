@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="CSS/home-responsive.css">
 <link rel="stylesheet" href="CSS/login.css">
 <style>
-  /* ── Page wrapper so navbar + card stack vertically ── */
+  /* ── Page wrapper ── */
   html, body {
     min-height: 100vh;
     margin: 0;
@@ -23,66 +23,123 @@
     align-items: center;
   }
 
-  /* ── Navbar wrapper: full width so the pill centres itself ── */
+  /* ── Navbar wrapper: transparent so no box shows on scroll ── */
   .navbar-wrap {
-    width: 150%;
+    width: 120%;
     position: sticky;
     top: 0;
     z-index: 9999;
-    background: #0d0e3a; /* same as page bg so it blends */
-    padding-bottom: 8px;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    justify-content: center;
   }
 
-  /* ── Login card: centred, with breathing room top & bottom ── */
+  /* ── Navbar pill: centred and properly sized ── */
+  .ff-navbar {
+    width: 100% !important;
+    max-width: 1500px !important;
+    margin: 16px auto 0 !important;
+    left: unset !important;
+    transform: unset !important;
+    position: relative !important;
+  }
+
+  .ff-navbar .ff-links {
+    gap: 32px !important;
+  }
+
+  .ff-navbar .ff-actions {
+    gap: 8px !important;
+    margin-left: auto;
+    margin-right: 4px;
+  }
+
+  /* ── Login card: smaller, centred with more breathing room ── */
   .card-wrap {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 150%;
-    padding: 32px 16px 0;
+    width: 120%;
+    padding: 40px 24px 60px;
   }
 
-  /* ── Footer: full width at the bottom ── */
-  .footer-wrap {
-    width: 145%;
-  }
-
-  /* ── Navbar: stretch to full width so links & buttons have room ── */
-  .ff-navbar {
-    width: 96% !important;
-    max-width: 1400px !important;
-  }
-
-  /* ── Reduce link gap so they don't crash into the action buttons ── */
-  .ff-navbar .ff-links {
-    gap: 28px !important;
-  }
-
-  /* ── Give action buttons a little more space between them ── */
-  .ff-navbar .ff-actions {
-    gap: 8px !important;
-    margin-left: auto;
-    margin-right: 8px;
-  }
-
-  /* ── Widen the login card to use more of the page ── */
   .card {
-    max-width: 1100px !important;
-    width: 96% !important;
+    max-width: 1050px !important;
+    width: 94% !important;
+    min-height: 480px !important;
   }
 
-  /* ── Footer: reduce top gap ── */
+  /* ── Footer ── */
+  .footer-wrap {
+    width: 120%;
+  }
+
   .ff-footer {
-    margin-top: 40px !important;
+    margin-top: 0 !important;
   }
 
+  /* ── Tablet ── */
+  @media (max-width: 768px) {
+    .ff-navbar {
+      width: 94% !important;
+    }
+    .ff-navbar .ff-links,
+    .ff-navbar .ff-actions {
+      display: none !important;
+    }
+    .ff-navbar .ff-hamburger {
+      display: flex !important;
+    }
+    .card {
+      flex-direction: column !important;
+      width: 94% !important;
+      min-height: auto !important;
+    }
+    .side-panel {
+      width: 100% !important;
+      border-radius: 16px 16px 0 0 !important;
+      padding: 28px 24px !important;
+      min-height: 150px !important;
+    }
+    .form-panel {
+      padding: 28px 24px !important;
+    }
+    .card-wrap {
+      padding: 24px 12px 40px !important;
+      align-items: flex-start !important;
+    }
+  }
+
+  /* ── Mobile ── */
   @media (max-width: 480px) {
     .ff-navbar {
       width: 92% !important;
     }
+    .card {
+      width: 96% !important;
+    }
     .card-wrap {
-      padding: 20px 12px 0;
+      padding: 16px 8px 32px !important;
+    }
+    .form-panel {
+      padding: 22px 16px !important;
+    }
+    .side-panel {
+      padding: 22px 16px !important;
+      min-height: 130px !important;
+    }
+    .ff-footer-grid {
+      grid-template-columns: 1fr !important;
+      gap: 24px !important;
+    }
+    .ff-footer-brand {
+      grid-column: unset !important;
+    }
+    .ff-footer-bottom {
+      flex-direction: column !important;
+      align-items: flex-start !important;
     }
   }
 </style>
