@@ -4,7 +4,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 ?>
 
 <style>
-/* (your existing footer styles – unchanged) */
+
 .ff-footer {
     background: #12153d;
     border-top: 1px solid rgba(255,255,255,0.08);

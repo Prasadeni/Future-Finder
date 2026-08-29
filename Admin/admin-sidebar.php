@@ -4,7 +4,7 @@ function aa($page, $cur) { return $page === $cur ? 'active' : ''; }
 ?>
 <aside class="admin-sidebar" id="adminSidebar">
   <a href="admin.php" class="sidebar-brand">
-    <!-- Replace logo image with admin icon -->
+    
     <i class="fa-solid fa-user-shield admin-icon"></i>
     <div>
       <span class="brand-title">Future Finder</span>

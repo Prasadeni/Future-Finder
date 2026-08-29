@@ -15,7 +15,7 @@ function navActive($page, $current) {
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
-/* Font Awesome for the user icon (already loaded in most pages) */
+
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css');
 
 .ff-navbar *,
@@ -66,14 +66,14 @@ function navActive($page, $current) {
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: flex-end;   /* 👈 pushes profile to the right */
-    padding-right: 20px;          /* gives some space from the right actions */
+    justify-content: flex-end;   
+    padding-right: 20px;          
     gap: 48px;
     list-style: none;
     white-space: nowrap;
 }
 
-/* Guest links (unchanged) */
+
 .ff-navbar .ff-center a {
     text-decoration: none;
     color: rgba(255,255,255,0.85);

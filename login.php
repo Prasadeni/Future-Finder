@@ -1,12 +1,5 @@
 <?php
-// ============================================================
-// login.php — Login & Register page
-// FIX 1: body no longer uses display:flex/align-items:center
-//         which conflicted with the shared navbar injection.
-//         Instead .card-wrap handles the centering with
-//         padding-top accounting for the navbar height.
-// FIX 2: Logo path corrected to Images/Logo.jpg (not ../images/logo.png)
-// ============================================================
+
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
