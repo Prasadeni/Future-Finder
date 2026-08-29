@@ -27,7 +27,7 @@ if ($userRole === 'admin') {
 <body>
 
 <!--navigation bar-->
-<?php require_once __DIR__ . '/../shared/navbar.php'; ?>
+<?php require_once __DIR__ . '/../shared/navbaroptional.php'; ?>
 
 <div class="wrapper">
 
@@ -71,10 +71,14 @@ if ($userRole === 'admin') {
         <button class="btn btn-success"  id="btnSubmit" onclick="submitAssessment()" style="display:none;">
             ✅ Submit Assessment
         </button>
+        
+    
     </div>
 
     <!-- Dot navigator — one dot per question, click to jump -->
     <div class="dot-nav" id="dotNav"></div>
+
+    
 
 </div>
 

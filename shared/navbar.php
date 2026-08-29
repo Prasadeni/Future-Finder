@@ -343,18 +343,18 @@ function navActive($page, $current) {
 <nav class="ff-navbar" role="navigation" aria-label="Main navigation">
 
     <a href="index.php" class="ff-logo" aria-label="Future Finder home">
-        <img src="../Images/logo.png" alt="Future Finder Logo">
-    </a>
+        <img src="/future_finder/Images/logo.png" alt="Future Finder Logo">
+        
 
     <ul class="ff-links">
-        <li><a href="index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a></li>
-        <li><a href="about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a></li>
-        <li><a href="careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a></li>
+        <li><a href="/future_finder/index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a></li>
+        <li><a href="/future_finder/about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a></li>
+        <li><a href="/future_finder/careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a></li>
     </ul>
 
     <div class="ff-actions">
-            <a href="../login.html"      class="ff-btn-login">Login</a>
-            <a href="../User/before_assessment.php" class="ff-btn-start">Start Assessment</a>
+            <a href="/future_finder/login.php"      class="ff-btn-login">Login</a>
+            <a href="restricted.php" class="ff-btn-start">Start Assessment</a>
     </div>
 
     <button class="ff-hamburger" id="ff-hamburger"
@@ -366,14 +366,14 @@ function navActive($page, $current) {
 </nav>
 
 <div class="ff-mobile-menu" id="ff-mobile-menu" role="navigation" aria-label="Mobile navigation">
-    <a href="index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a>
-    <a href="about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a>
-    <a href="careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a>
+    <a href="/future_finder/index.php"    <?= navActive('index.php',    $currentPage) ?>>Home</a>
+    <a href="/future_finder/about.php"    <?= navActive('about.php',    $currentPage) ?>>About Us</a>
+    <a href="/future_finder/careers.php"  <?= navActive('careers.php',  $currentPage) ?>>Careers</a>
     
     <div class="ff-mobile-divider"></div>
         <div class="ff-mobile-actions">
-            <a href="../login.html"      class="ff-btn-login">Login</a>
-            <a href="../User/before_assessment.php" class="ff-btn-start">Start Assessment</a>
+            <a href="/future_finder/login.php"      class="ff-btn-login">Login</a>
+            <a href="/future_finder/User/before_assessment.php" class="ff-btn-start">Start Assessment</a>
         </div>
 </div>
 

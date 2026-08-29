@@ -192,4 +192,3 @@ registerForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Create Account';
   }
 });
-

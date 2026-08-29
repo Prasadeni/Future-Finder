@@ -17,7 +17,6 @@ if (ini_get("session.use_cookies")) {
 // Destroy the session
 session_destroy();
 
-// Redirect to login page
-header('Location: index.html');
+// Redirect to login page (absolute path works from anywhere)
+header('Location: /future_finder/login.php');
 exit;
-?>

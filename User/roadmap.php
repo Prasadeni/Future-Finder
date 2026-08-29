@@ -1,15 +1,15 @@
-<?php
+]<?php
 
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.html');
+    header('Location: ../login.php');
     exit;
 }
 
 $userRole = $_SESSION['role'] ?? 'user';
 if ($userRole === 'admin') {
-    header('Location: ../admin.php');
+    header('Location: ../Admin/admin.php');
     exit;
 }
 
@@ -56,8 +56,6 @@ mysqli_close($conn);
     <title>Career Roadmap | Future Finder</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- html2canvas for download-as-image feature -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* ── Variables ── */
         :root {
@@ -89,7 +87,7 @@ mysqli_close($conn);
             padding: 0 20px 80px;
         }
 
-        /* ── Page header ── */
+        /* ── Page header with Back button ── */
         .page-header {
             display: flex;
             align-items: center;
@@ -105,6 +103,26 @@ mysqli_close($conn);
         }
         .page-header h1 span { color: var(--primary); }
         .page-header p { font-size: 0.9rem; color: var(--muted); margin-top: 3px; }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-dashboard {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(54,173,163,0.15);
+            border: 1px solid rgba(54,173,163,0.3);
+            border-radius: 30px;
+            color: #36ada3;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-dashboard:hover { background: rgba(54,173,163,0.25); }
 
         /* ── Career selector row ── */
         .selector-row {
@@ -137,7 +155,6 @@ mysqli_close($conn);
         }
         .selector-row select:focus { border-color: var(--primary); }
 
-        /* Download button */
         .btn-download {
             display: inline-flex;
             align-items: center;
@@ -232,8 +249,7 @@ mysqli_close($conn);
             margin-top: 4px;
         }
 
-        /* ── Roadmap timeline ── */
-        /* Container that will be captured by html2canvas for download */
+        /* ── Roadmap visual ── */
         #roadmap-visual {
             background: var(--card);
             border: 1px solid var(--border);
@@ -243,7 +259,6 @@ mysqli_close($conn);
             position: relative;
         }
 
-        /* Watermark header shown in downloaded image */
         .roadmap-header {
             display: flex;
             align-items: center;
@@ -273,7 +288,7 @@ mysqli_close($conn);
             border-radius: 99px;
         }
 
-        /* Timeline vertical line */
+        /* Timeline */
         .timeline {
             position: relative;
             padding-left: 48px;
@@ -285,29 +300,21 @@ mysqli_close($conn);
             top: 8px;
             bottom: 8px;
             width: 3px;
-            /* Gradient line matching the slide design: light blue top → dark blue bottom */
             background: linear-gradient(to bottom, #7dd3fc, #36ada3, #1e3a8a);
             border-radius: 3px;
         }
 
-        /* Individual stage */
+        /* Stage */
         .stage {
             position: relative;
             margin-bottom: 20px;
             animation: fadeInLeft 0.4s ease both;
         }
-        .stage:nth-child(1) { animation-delay: 0.05s; }
-        .stage:nth-child(2) { animation-delay: 0.10s; }
-        .stage:nth-child(3) { animation-delay: 0.15s; }
-        .stage:nth-child(4) { animation-delay: 0.20s; }
-        .stage:nth-child(5) { animation-delay: 0.25s; }
-        .stage:nth-child(6) { animation-delay: 0.30s; }
         .stage:last-child { margin-bottom: 0; }
 
-        /* Stage dot on the line */
         .stage-dot {
             position: absolute;
-            left: -36px;  /* sits on the timeline line */
+            left: -36px;
             top: 16px;
             width: 20px;
             height: 20px;
@@ -324,7 +331,6 @@ mysqli_close($conn);
             z-index: 1;
         }
 
-        /* Stage card — the pill/hexagon shape from the slide */
         .stage-card {
             background: linear-gradient(135deg, var(--card-lt), var(--card));
             border: 1.5px solid var(--border);
@@ -333,16 +339,14 @@ mysqli_close($conn);
             display: flex;
             align-items: center;
             gap: 16px;
-            transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+            transition: border-color 0.2s, transform 0.15s;
             cursor: default;
         }
         .stage-card:hover {
             border-color: var(--primary);
             transform: translateX(4px);
-            box-shadow: 0 4px 20px rgba(54,173,163,0.15);
         }
 
-        /* Stage left: number + icon pill — matches the coloured pill in slide */
         .stage-pill {
             display: flex;
             align-items: center;
@@ -365,7 +369,6 @@ mysqli_close($conn);
             color: rgba(255,255,255,0.6);
         }
 
-        /* Colour variations per stage number — matching slide gradient */
         .stage:nth-child(1) .stage-pill { background: linear-gradient(135deg, #1e90c0, #1470a0); }
         .stage:nth-child(2) .stage-pill { background: linear-gradient(135deg, #1a7eb0, #125f90); }
         .stage:nth-child(3) .stage-pill { background: linear-gradient(135deg, #1560a0, #0e4880); }
@@ -373,7 +376,6 @@ mysqli_close($conn);
         .stage:nth-child(5) .stage-pill { background: linear-gradient(135deg, #0e2e70, #082060); }
         .stage:nth-child(6) .stage-pill { background: linear-gradient(135deg, #0a1f58, #061550); }
 
-        /* Stage right: title + description */
         .stage-content { flex: 1; }
         .stage-content .s-title {
             font-size: 0.95rem;
@@ -387,7 +389,6 @@ mysqli_close($conn);
             line-height: 1.55;
         }
 
-        /* Time badge on right */
         .stage-time {
             display: flex;
             align-items: center;
@@ -449,13 +450,140 @@ mysqli_close($conn);
         }
         .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 
+        /* ── RESPONSIVE ── */
         @media (max-width: 600px) {
-            .page-header h1 { font-size: 1.3rem; }
+            .page-header { flex-direction: column; align-items: flex-start; }
             .career-info-card { flex-direction: column; }
             .total-time { margin-left: 0; width: 100%; }
             .stage-pill { min-width: 80px; }
             #roadmap-visual { padding: 20px 14px; }
             .timeline { padding-left: 36px; }
+            .stage-card { flex-wrap: wrap; }
+        }
+
+        /* ============================================================
+           PRINT STYLES — FIXED: show parent chain, hide irrelevant elements
+           ============================================================ */
+        @media print {
+            /* Keep the page-wrap and its children visible, but hide everything else */
+            html, body {
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Hide navbar, footer, and other top-level elements */
+            body > *:not(.page-wrap) {
+                display: none !important;
+            }
+
+            /* Make the page-wrap occupy full page with white background */
+            .page-wrap {
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                background: #ffffff !important;
+            }
+
+            /* Hide everything inside page-wrap except #roadmap-visual */
+            .page-wrap > *:not(#roadmap-visual) {
+                display: none !important;
+            }
+
+            /* Make the roadmap container fill the page */
+            #roadmap-visual {
+                display: block !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #ffffff !important;
+                color: #1a1a2e !important;
+                padding: 40px !important;
+                margin: 0 !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                overflow-y: auto;
+                font-size: 11pt !important;
+                line-height: 1.5;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Force all text to dark, preserve background colours */
+            #roadmap-visual * {
+                color: #1a1a2e !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Stage cards light background */
+            #roadmap-visual .stage-card {
+                background: #f5f7fa !important;
+                border-color: #ccc !important;
+            }
+
+            #roadmap-visual .stage-pill {
+                background: #e0e7f0 !important;
+            }
+            #roadmap-visual .stage-pill .s-label,
+            #roadmap-visual .stage-pill .s-num {
+                color: #1a1a2e !important;
+            }
+            #roadmap-visual .stage-content .s-title {
+                color: #1a1a2e !important;
+            }
+            #roadmap-visual .stage-content .s-desc {
+                color: #444 !important;
+            }
+            #roadmap-visual .stage-time {
+                color: #1a1a2e !important;
+            }
+            #roadmap-visual .stage-time svg {
+                stroke: #1a1a2e !important;
+            }
+
+            #roadmap-visual .timeline::before {
+                background: #888 !important;
+            }
+
+            #roadmap-visual .stage-dot {
+                background: #1a1a2e !important;
+                border-color: #fff !important;
+                box-shadow: 0 0 0 2px #1a1a2e !important;
+                color: #fff !important;
+            }
+
+            #roadmap-visual .roadmap-header {
+                border-bottom-color: #ccc !important;
+            }
+            #roadmap-visual .roadmap-header h3,
+            #roadmap-visual .roadmap-header p {
+                color: #1a1a2e !important;
+            }
+            #roadmap-visual .ff-badge {
+                background: #e0e7f0 !important;
+                border-color: #ccc !important;
+                color: #1a1a2e !important;
+            }
+
+            /* Hide any extra cards that may appear inside the visual */
+            #roadmap-visual .career-info-card,
+            #roadmap-visual .total-time {
+                display: none !important;
+            }
+
+            /* Avoid page breaks inside stages */
+            .stage {
+                page-break-inside: avoid;
+                margin-bottom: 16px !important;
+            }
+            .roadmap-header {
+                page-break-after: avoid;
+            }
         }
     </style>
 </head>
@@ -463,16 +591,21 @@ mysqli_close($conn);
 
 <?php
     $currentPage = 'roadmap.php';
-    require_once __DIR__ . '/../shared/navbar.php';
+    require_once __DIR__ . '/../shared/navbaroptional.php';
 ?>
 
 <div class="page-wrap">
 
-    <!-- Page header -->
+    <!-- Page header with Back button -->
     <div class="page-header">
         <div>
             <h1>Career <span>Roadmap</span></h1>
             <p>Your step-by-step learning path to achieve your career goal</p>
+        </div>
+        <div class="header-actions">
+            <a href="dashboard.php" class="btn-dashboard">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
         </div>
     </div>
 
@@ -487,8 +620,8 @@ mysqli_close($conn);
             </option>
             <?php endforeach; ?>
         </select>
-        <button class="btn-download" onclick="downloadRoadmap()">
-            Download Roadmap
+        <button class="btn-download" onclick="downloadPDF()">
+            <i class="fa-solid fa-file-pdf"></i> Download PDF
         </button>
     </div>
 
@@ -506,9 +639,8 @@ mysqli_close($conn);
         </div>
     </div>
 
-    <!-- Roadmap visual (captured for download) -->
+    <!-- Roadmap visual -->
     <div id="roadmap-visual">
-        <!-- Header shown in downloaded image -->
         <div class="roadmap-header">
             <div>
                 <h3 id="rm-title">Career Roadmap</h3>
@@ -517,7 +649,7 @@ mysqli_close($conn);
             <div class="ff-badge">futurefinder.lk</div>
         </div>
 
-        <!-- Timeline stages injected here by JS -->
+        <!-- Timeline stages injected by JS -->
         <div class="timeline" id="timeline">
             <div class="state-box">
                 <div class="spinner"></div>
@@ -528,9 +660,8 @@ mysqli_close($conn);
 
     <!-- Action buttons -->
     <div class="action-row">
-        <a href="dashboard.php" class="btn-outline">Dashboard</a>
         <a href="results.php"   class="btn-outline">My Results</a>
-        <a href="before_assessment.php"class="btn-outline">Retake Assessment</a>
+        <a href="before_assessment.php" class="btn-outline">Retake Assessment</a>
     </div>
 
 </div>
@@ -538,7 +669,7 @@ mysqli_close($conn);
 <?php require_once __DIR__ . '/../shared/footer.php'; ?>
 
 <script>
-// ── Career icon map (emoji per career title keyword) ─────────
+// ── Career icon map ─────────────────────────────────────────
 const iconMap = {
     'Software':    '💻',
     'Web':         '🌐',
@@ -564,16 +695,14 @@ function getCareerIcon(title) {
     return '🎯';
 }
 
-// ── Load roadmap for selected career ─────────────────────────
+// ── Load roadmap ──────────────────────────────────────────
 function loadRoadmap(careerID) {
-    // Show loading state
     document.getElementById('timeline').innerHTML = `
         <div class="state-box">
             <div class="spinner"></div>
             <p style="color:var(--muted)">Loading roadmap...</p>
         </div>`;
 
-    // Fetch from get_roadmap.php API
     fetch('../API/get_roadmap.php?career_id=' + careerID)
         .then(r => r.json())
         .then(data => {
@@ -590,19 +719,16 @@ function loadRoadmap(careerID) {
         });
 }
 
-// ── Render the roadmap ────────────────────────────────────────
+// ── Render roadmap ────────────────────────────────────────
 function renderRoadmap(career, stages) {
-    // Update career info banner
     const icon = getCareerIcon(career.Title);
     document.getElementById('careerIcon').textContent    = icon;
     document.getElementById('careerTitle').textContent   = career.Title;
     document.getElementById('careerIndustry').textContent= career.Industry || 'Technology';
     document.getElementById('careerDesc').textContent    = career.Description || '';
 
-    // Update roadmap header (shown in downloaded image)
     document.getElementById('rm-title').textContent = career.Title + ' — Career Roadmap';
 
-    // Calculate total months
     let totalMonths = 0;
     stages.forEach(s => {
         const match = (s.EstimatedTime || '').match(/(\d+)/);
@@ -610,7 +736,6 @@ function renderRoadmap(career, stages) {
     });
     document.getElementById('totalMonths').textContent = totalMonths;
 
-    // Build stage HTML
     const html = stages.map((stage, i) => `
         <div class="stage">
             <div class="stage-dot">${stage.StageNumber}</div>
@@ -643,44 +768,20 @@ function renderRoadmap(career, stages) {
         </div>`;
 }
 
-// ── Truncate text helper ──────────────────────────────────────
 function truncate(str, max) {
     return str && str.length > max ? str.slice(0, max) + '…' : str;
 }
 
-// ── Download roadmap as PNG image ─────────────────────────────
-// Uses html2canvas to capture #roadmap-visual and trigger download
-function downloadRoadmap() {
-    const btn = document.querySelector('.btn-download');
-    btn.textContent = '⏳ Generating...';
-    btn.disabled    = true;
-
-    const element = document.getElementById('roadmap-visual');
-
-    html2canvas(element, {
-        backgroundColor: '#1a1b4b',   // match --card colour
-        scale: 2,                      // 2x for high-res / retina
-        useCORS: true,
-        logging: false,
-    }).then(canvas => {
-        // Create download link
-        const link      = document.createElement('a');
-        const careerName= document.getElementById('careerTitle').textContent
-                            .replace(/[^a-zA-Z0-9]/g, '_');
-        link.download   = 'Career_Roadmap_' + careerName + '.png';
-        link.href       = canvas.toDataURL('image/png');
-        link.click();
-
-        btn.innerHTML   = '⬇️ Download Roadmap';
-        btn.disabled    = false;
-    }).catch(err => {
-        alert('Download failed: ' + err.message);
-        btn.innerHTML = '⬇️ Download Roadmap';
-        btn.disabled  = false;
-    });
+// ── Download PDF ──────────────────────────────────────────
+function downloadPDF() {
+    // Ensure the roadmap is fully rendered (it should be, but just in case)
+    // We can also add a small delay to let any pending animations finish.
+    setTimeout(() => {
+        window.print();
+    }, 300);
 }
 
-// ── On page load: show default career roadmap ─────────────────
+// ── On page load ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     const defaultID = <?= $defaultCareerID ?>;
     if (defaultID > 0) {
