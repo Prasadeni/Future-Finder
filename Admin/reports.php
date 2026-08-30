@@ -1,4 +1,9 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 require_once __DIR__ . '/../Includes/db_connection.php';
 
@@ -53,9 +58,13 @@ if ($check2 && mysqli_num_rows($check2) > 0) {
          ORDER BY a.Date DESC LIMIT 10");
 }
 
-// Career category distribution
+// ── Fixed: use 'Industry' column instead of 'category' ──
 $categoryDist = mysqli_query($conn,
-    "SELECT category, COUNT(*) total FROM Careers WHERE category != '' GROUP BY category ORDER BY total DESC");
+    "SELECT Industry as category, COUNT(*) total 
+     FROM Careers 
+     WHERE Industry != '' 
+     GROUP BY Industry 
+     ORDER BY total DESC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -134,7 +143,7 @@ $categoryDist = mysqli_query($conn,
 
     </div>
 
-    <!-- Career category distribution -->
+    <!-- Career category distribution – fixed column name -->
     <?php if ($categoryDist && mysqli_num_rows($categoryDist) > 0): ?>
     <div class="admin-card">
       <div class="card-header"><h2><i class="fa-solid fa-layer-group" style="color:var(--teal);margin-right:8px"></i>Career Categories</h2></div>
