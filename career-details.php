@@ -36,7 +36,7 @@ $skillsResult = mysqli_stmt_get_result($skillsStmt);
 $skills = mysqli_fetch_all($skillsResult, MYSQLI_ASSOC);
 mysqli_stmt_close($skillsStmt);
 
-// ── Fetch courses for this career (using existing 'IsFree' column) ──
+// ── Fetch courses for this career ──
 $coursesStmt = mysqli_prepare($conn, "SELECT Title, Provider, URL, IsFree FROM Courses WHERE CareerID = ?");
 mysqli_stmt_bind_param($coursesStmt, 'i', $careerID);
 mysqli_stmt_execute($coursesStmt);
@@ -44,8 +44,8 @@ $coursesResult = mysqli_stmt_get_result($coursesStmt);
 $courses = mysqli_fetch_all($coursesResult, MYSQLI_ASSOC);
 mysqli_stmt_close($coursesStmt);
 
-// ── Fetch roadmap for this career ──
-$roadmapStmt = mysqli_prepare($conn, "SELECT * FROM Roadmaps WHERE CareerID = ? ORDER BY StageNumber");
+// ── Fetch roadmap for this career (table is `Roadmap`, not `Roadmaps`) ──
+$roadmapStmt = mysqli_prepare($conn, "SELECT * FROM Roadmap WHERE CareerID = ? ORDER BY StageNumber");
 mysqli_stmt_bind_param($roadmapStmt, 'i', $careerID);
 mysqli_stmt_execute($roadmapStmt);
 $roadmapResult = mysqli_stmt_get_result($roadmapStmt);
@@ -67,6 +67,7 @@ mysqli_stmt_close($relatedStmt);
 
 mysqli_close($conn);
 
+// ── Helper functions (unchanged) ──
 function getDemandTag($demand) {
     $map = [
         'Very High' => 'tag-very-high',
@@ -677,10 +678,8 @@ function homeCareerIcon($title) {
                     <?php foreach ($roadmap as $step): ?>
                         <div class="roadmap-step">
                             <div class="step-number">Stage <?= htmlspecialchars($step['StageNumber']) ?></div>
-                            <div class="step-title"><?= htmlspecialchars($step['Description']) ?></div>
-                            <?php if ($step['EstimatedTime']): ?>
-                                <div class="step-time"><i class="far fa-clock"></i> <?= htmlspecialchars($step['EstimatedTime']) ?></div>
-                            <?php endif; ?>
+                            <div class="step-title"><?= htmlspecialchars($step['Title']) ?></div>
+                            <div class="step-time"><i class="far fa-clock"></i> <?= htmlspecialchars($step['EstimatedTime']) ?></div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -688,19 +687,17 @@ function homeCareerIcon($title) {
         </div>
 
         <!-- Action Buttons -->
-<div class="action-buttons">
-    <a href="User/dashboard.php" class="btn btn-primary">
-        <i class="fas fa-arrow-left"></i> Back to Dashboard
-    </a>
-    <a href="User/before_assessment.php" class="btn btn-outline">
-        <i class="fas fa-clipboard-check"></i> Take Assessment
-    </a>
-    <a href="User/compare.php" class="btn btn-secondary">
-        <i class="fas fa-arrows-left-right"></i> Compare Careers
-    </a>
-</div>
-
-      
+        <div class="action-buttons">
+            <a href="User/dashboard.php" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <a href="User/before_assessment.php" class="btn btn-outline">
+                <i class="fas fa-clipboard-check"></i> Take Assessment
+            </a>
+            <a href="User/compare.php" class="btn btn-secondary">
+                <i class="fas fa-arrows-left-right"></i> Compare Careers
+            </a>
+        </div>
 
         <!-- Related Careers -->
         <?php if (!empty($relatedCareers)): ?>

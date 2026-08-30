@@ -68,14 +68,16 @@ foreach ($answers as $ans) {
     }
     if (!$chosen) continue; // should not happen
 
-    // Add weighted points to each career
+    // Add weighted points to each career, but only for CareerID <= 15
     foreach ($chosen['scores'] as $careerID => $points) {
-        $careerID = intval($careerID); // ensure integer
+        $careerID = intval($careerID);
+        // Exclude new careers (16–22)
+        if ($careerID > 15) continue;
         if (!isset($careerScores[$careerID])) {
             $careerScores[$careerID] = 0;
-        }
-        $careerScores[$careerID] += ($points * $weight);
     }
+    $careerScores[$careerID] += ($points * $weight);
+}
 }
 mysqli_stmt_close($stmtInsert);
 

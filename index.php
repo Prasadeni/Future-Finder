@@ -1,5 +1,9 @@
 <?php
+session_start(); // needed for login detection
 require_once __DIR__ . '/Includes/db_connection.php';
+
+$isLoggedIn = isset($_SESSION['user_id']);
+$firstName  = $_SESSION['first_name'] ?? 'User';
 
 $homeCareers = [];
 $homeCareerQuery = mysqli_query($conn, 'SELECT CareerID, Title, Description, SalaryRange, Demand, Growth, RequiredEducation, Industry FROM Careers ORDER BY CareerID ASC LIMIT 6');
@@ -32,6 +36,109 @@ function homeCareerIcon(string $title): string
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="CSS/home-page.css">
+  
+  <style>
+    /* ── Logged‑in hero styles (compact) ── */
+    .hero-loggedin {
+      text-align: center;
+      padding: 32px 20px; /* reduced from 60px */
+      background: rgba(26,31,122,0.4);
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      margin: 30px auto;
+      max-width: 720px; /* slightly narrower */
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .hero-loggedin h1 {
+      font-size: clamp(1.5rem, 3vw, 2.2rem); /* smaller */
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .hero-loggedin h1 span {
+      color: #36ada3;
+    }
+    .hero-loggedin .sub-text {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.95rem;
+      margin-bottom: 18px;
+    }
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      max-width: 380px;
+      margin: 0 auto;
+    }
+    .quick-links .btn {
+      flex: 0 0 calc(50% - 5px);
+      padding: 10px 12px; /* smaller padding */
+      border-radius: 30px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: 0.2s;
+      text-align: center;
+      box-sizing: border-box;
+      font-size: 0.85rem;
+    }
+    .quick-links .btn-primary {
+      background: #36ada3;
+      color: #fff;
+      border: 2px solid #36ada3;
+    }
+    .quick-links .btn-primary:hover {
+      background: #2d9992;
+      border-color: #2d9992;
+    }
+    .quick-links .btn-secondary {
+      background: transparent;
+      color: rgba(255,255,255,0.85);
+      border: 2px solid rgba(255,255,255,0.25);
+    }
+    .quick-links .btn-secondary:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.5);
+    }
+    .logout-row {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+    .logout-row .not-you {
+      color: rgba(255,255,255,0.4);
+    }
+    .btn-logout {
+      background: transparent;
+      color: #ef4444;
+      border: 2px solid rgba(239,68,68,0.3);
+      padding: 4px 18px;
+      border-radius: 30px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: 0.2s;
+      display: inline-block;
+      font-size: 0.8rem;
+    }
+    .btn-logout:hover {
+      background: rgba(239,68,68,0.1);
+      border-color: #ef4444;
+      color: #ff6b6b;
+    }
+    @media (max-width: 600px) {
+      .quick-links .btn {
+        flex: 0 0 100%;
+        max-width: 220px;
+      }
+      .hero-loggedin {
+        padding: 24px 16px;
+        margin: 20px 10px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -49,16 +156,35 @@ function homeCareerIcon(string $title): string
     <section class="hero" id="home">
       <span class="orb one" aria-hidden="true"></span><span class="orb two" aria-hidden="true"></span>
       <div class="container hero-grid">
-        <div class="hero-copy">
-          <h1>Find Your Perfect <span class="gradient-text">Career Path</span> with Confidence</h1>
-          <p>Future Finder turns your interests, skills, strengths, and preferences into clear career possibilities—so you can make your next move with confidence.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="restricted.php">Start Assessment <span aria-hidden="true">→</span></a>
-            <a class="btn btn-secondary" href="login.php">Login</a>
+        <?php if ($isLoggedIn): ?>
+          <!-- ── Logged‑in user hero (compact) ── -->
+          <div class="hero-loggedin">
+            <h1>Welcome back, <span><?= htmlspecialchars($firstName) ?></span>! 🎉</h1>
+            <p class="sub-text">You're already on your career journey. Here's what you can do next:</p>
+            <div class="quick-links">
+              <a href="User/dashboard.php" class="btn btn-primary">Go to Dashboard</a>
+              <a href="User/before_assessment.php" class="btn btn-secondary">Take Assessment</a>
+              <a href="User/roadmap.php" class="btn btn-secondary">Career Roadmap</a>
+              <a href="User/cv.php" class="btn btn-secondary">CV Generator</a>
+            </div>
+            <div class="logout-row">
+              <span class="not-you">Not you?</span>
+              <a href="logout.php" class="btn-logout">Logout</a>
+            </div>
           </div>
-        </div>
+        <?php else: ?>
+          <!-- ── Guest hero ── -->
+          <div class="hero-copy">
+            <h1>Find Your Perfect <span class="gradient-text">Career Path</span> with Confidence</h1>
+            <p>Future Finder turns your interests, skills, strengths, and preferences into clear career possibilities—so you can make your next move with confidence.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="restricted.php">Start Assessment <span aria-hidden="true">→</span></a>
+              <a class="btn btn-secondary" href="login.php">Login</a>
+            </div>
+          </div>
+        <?php endif; ?>
       </div>
-      <!-- ===== Image-only technology career marquee ===== -->
+      <!-- ===== Image-only technology career marquee (shown to everyone) ===== -->
       <div class="career-strip" aria-label="Technology career gallery">
         <div class="marquee" id="career-marquee">
           <div class="marquee-group">
@@ -82,9 +208,7 @@ function homeCareerIcon(string $title): string
       </div>
     </section>
 
-  
-
-    <!-- ===== Statistics ===== -->
+    <!-- ===== Statistics (shown to everyone) ===== -->
     <section class="section" aria-labelledby="stats-title">
       <div class="container">
         <div class="section-head reveal">
@@ -105,15 +229,14 @@ function homeCareerIcon(string $title): string
             <div class="stat-label">Career Insights</div>
           </article>
           <article class="stat-card reveal">
-            <div class="stat-number" data-count="100" data-suffix="%">0
-            </div>
+            <div class="stat-number" data-count="100" data-suffix="%">0</div>
             <div class="stat-label">Personalized Results</div>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- ===== Our Careers ===== -->
+    <!-- ===== Our Careers (shown to everyone) ===== -->
     <section class="section careers-showcase" id="careers" aria-labelledby="careers-title">
       <div class="container">
         <div class="section-head reveal">
@@ -147,7 +270,7 @@ function homeCareerIcon(string $title): string
       </div>
     </section>
 
-    <!-- ===== How it works ===== -->
+    <!-- ===== How it works (shown to everyone) ===== -->
     <section class="section" id="how-it-works">
       <div class="container">
         <div class="section-head reveal">
@@ -180,16 +303,20 @@ function homeCareerIcon(string $title): string
       </div>
     </section>
 
-    <!-- ===== Features ===== -->
-
-
     <!-- ===== Final CTA ===== -->
     <section class="cta">
       <div class="container">
         <div class="cta-box reveal">
           <div class="section-tag">TAKE THE FIRST STEP</div>
-          <h2>Your Future Starts with the Right Career Choice</h2>
-          <p>Understand yourself better, explore possibilities with purpose, and turn career uncertainty into a plan you can believe in.</p><a class="btn btn-primary" href="restricted.php">Start Assessment <span aria-hidden="true">→</span></a>
+          <h2><?= $isLoggedIn ? 'Continue Your Career Journey' : 'Your Future Starts with the Right Career Choice' ?></h2>
+          <p><?= $isLoggedIn ? 'You\'re already on the right track. Head to your dashboard to see your matches, compare careers, and plan your next move.' : 'Understand yourself better, explore possibilities with purpose, and turn career uncertainty into a plan you can believe in.' ?></p>
+          <a class="btn btn-primary" href="<?= $isLoggedIn ? 'User/dashboard.php' : 'restricted.php' ?>">
+            <?= $isLoggedIn ? 'Go to Dashboard' : 'Start Assessment' ?>
+            <span aria-hidden="true">→</span>
+          </a>
+          <?php if (!$isLoggedIn): ?>
+            <a class="btn btn-secondary" href="login.php" style="margin-left:10px;">Login</a>
+          <?php endif; ?>
         </div>
       </div>
     </section>
@@ -199,16 +326,14 @@ function homeCareerIcon(string $title): string
   <?php require __DIR__ . '/shared/footer.php'; ?>
 
   <script>
-    // ===== Homepage interactions =====
+    // ===== Homepage interactions (unchanged) =====
     (() => {
-      // ===== Seamless marquee (one duplicated set, hidden from assistive technology) =====
       const marquee = document.getElementById('career-marquee'),
         group = marquee.firstElementChild,
         copy = group.cloneNode(true);
       copy.setAttribute('aria-hidden', 'true');
       marquee.appendChild(copy);
 
-      // ===== Reveal and count-up animations =====
       const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const revealObserver = new IntersectionObserver(entries => entries.forEach(entry => {
         if (entry.isIntersecting) {

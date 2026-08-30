@@ -33,9 +33,9 @@ mysqli_stmt_close($latestStmt);
 $assessed     = !empty($latest);
 $assessmentID = $assessed ? intval($latest['AssessmentID']) : 0;
 $recommendations = [];
+$topCareerID = 0;
 
 if ($assessed) {
-    // Load top 3 recommendations for the donut charts
     $rStmt = mysqli_prepare($conn,
         "SELECT c.Title, r.MatchScore, r.CareerID
          FROM Recommendations r
@@ -47,10 +47,25 @@ if ($assessed) {
     mysqli_stmt_execute($rStmt);
     $recommendations = mysqli_fetch_all(mysqli_stmt_get_result($rStmt), MYSQLI_ASSOC);
     mysqli_stmt_close($rStmt);
+    
+    $topCareerID = $recommendations[0]['CareerID'] ?? 0;
 }
 
-$topCareer  = $recommendations[0]['Title']     ?? null;
-$topCareerID= $recommendations[0]['CareerID']  ?? 0;
+$topCareer  = $recommendations[0]['Title'] ?? null;
+
+// ── Check if roadmap exists for the top career ──────────────
+$roadmapExists = false;
+if ($topCareerID > 0) {
+    $roadmapStmt = mysqli_prepare($conn,
+        "SELECT COUNT(*) as cnt FROM Roadmap WHERE CareerID = ?"
+    );
+    mysqli_stmt_bind_param($roadmapStmt, 'i', $topCareerID);
+    mysqli_stmt_execute($roadmapStmt);
+    $roadmapResult = mysqli_stmt_get_result($roadmapStmt);
+    $roadmapRow = mysqli_fetch_assoc($roadmapResult);
+    $roadmapExists = ($roadmapRow['cnt'] > 0);
+    mysqli_stmt_close($roadmapStmt);
+}
 
 mysqli_close($conn);
 ?>
@@ -63,11 +78,6 @@ mysqli_close($conn);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-    /* ============================================================
-       dashboard.css — embedded
-       Dark navy theme matching images exactly
-       ============================================================ */
-
     :root {
         --bg:       #0e1057;
         --sidebar:  #111466;
@@ -79,7 +89,7 @@ mysqli_close($conn);
         --muted:    rgba(255,255,255,0.65);
         --border:   rgba(255,255,255,0.12);
         --radius:   14px;
-        --nav-h:    90px;   /* height of the shared navbar pill */
+        --nav-h:    90px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -91,14 +101,12 @@ mysqli_close($conn);
         min-height: 100vh;
     }
 
-    /* ── Page layout: sidebar + main ── */
     .dash-layout {
         display: flex;
         min-height: calc(100vh - var(--nav-h));
         padding-top: 12px;
     }
 
-    /* ── Sidebar ── */
     .dash-sidebar {
         width: 220px;
         flex-shrink: 0;
@@ -125,7 +133,6 @@ mysqli_close($conn);
         margin-bottom: 8px;
     }
 
-    /* Pill nav items — matching the outlined pill style in image */
     .sidebar-item {
         display: flex;
         align-items: center;
@@ -155,11 +162,10 @@ mysqli_close($conn);
         flex-shrink: 0;
     }
 
-    /* Profile item at bottom has filled teal background */
     .sidebar-item.profile-item {
         background: rgba(54,173,163,0.2);
         border-color: var(--primary);
-        margin-top: auto;
+        margin-top: 40px;
     }
     .sidebar-item.profile-item .s-avatar {
         width: 22px; height: 22px; border-radius: 50%;
@@ -168,14 +174,12 @@ mysqli_close($conn);
         font-size: 10px; font-weight: 800; color: #fff;
     }
 
-    /* ── Main content area ── */
     .dash-main {
         flex: 1;
         padding: 32px 36px 80px;
         overflow-y: auto;
     }
 
-    /* ── Welcome header ── */
     .welcome-section { margin-bottom: 28px; }
     .welcome-section h1 {
         font-size: clamp(1.8rem, 3.5vw, 2.6rem);
@@ -191,7 +195,6 @@ mysqli_close($conn);
         font-weight: 500;
     }
 
-    /* ── Info card (the rounded rect boxes in image) ── */
     .info-card {
         background: var(--card);
         border-radius: var(--radius);
@@ -216,6 +219,7 @@ mysqli_close($conn);
     .info-card .card-value.completed { color: var(--primary); }
     .info-card .card-value.no        { color: #ef4444; }
     .info-card .card-value.soon      { color: var(--primary); }
+    .info-card .card-value.yes       { color: var(--primary); }
 
     .info-card .card-sub {
         font-size: 0.9rem;
@@ -223,8 +227,11 @@ mysqli_close($conn);
         color: rgba(255,255,255,0.75);
         margin-top: 4px;
     }
+    .info-card .card-sub a {
+        color: var(--primary);
+        text-decoration: underline;
+    }
 
-    /* Assessment status card — full width with button */
     .status-card {
         display: flex;
         align-items: center;
@@ -233,7 +240,6 @@ mysqli_close($conn);
         flex-wrap: wrap;
     }
 
-    /* Two-column row for top career + roadmap */
     .two-col {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -241,7 +247,6 @@ mysqli_close($conn);
         margin-bottom: 16px;
     }
 
-    /* ── Buttons ── */
     .btn-teal {
         display: inline-flex;
         align-items: center;
@@ -271,72 +276,69 @@ mysqli_close($conn);
         padding: 28px;
         display: flex;
         align-items: center;
-        gap: 32px;
+        gap: 20px;
         flex-wrap: wrap;
     }
 
     .overview-label {
-        font-size: 1.4rem;
+        font-size: 1rem;
         font-weight: 900;
         color: #fff;
         line-height: 1.25;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        min-width: 120px;
+        min-width: 90px;
+        flex-shrink: 0;
     }
 
     .donuts-row {
         display: flex;
-        gap: 36px;
-        flex-wrap: wrap;
-        align-items: flex-end;
+        flex-wrap: nowrap;        
+        gap: 30px;
+        align-items: center;
         flex: 1;
-        justify-content: center;
+        justify-content: center;  
     }
 
-    /* Individual donut item */
     .donut-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 6px;
+        flex: 0 0 auto;
+        width: 95px;             
     }
 
-    /* SVG donut wrapper */
     .donut-wrap {
         position: relative;
-        width: 110px;
-        height: 110px;
+        width: 90px;
+        height: 90px;
     }
     .donut-wrap svg {
-        width: 110px;
-        height: 110px;
+        width: 90px;
+        height: 90px;
         transform: rotate(-90deg);
     }
 
-    /* Background circle (track) */
     .donut-track {
         fill: none;
         stroke: rgba(255,255,255,0.12);
         stroke-width: 10;
     }
 
-    /* Foreground circle (progress) */
     .donut-progress {
         fill: none;
         stroke: var(--primary);
         stroke-width: 10;
         stroke-linecap: round;
-        /* Animated via JS using stroke-dasharray / stroke-dashoffset */
         transition: stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1);
     }
 
-    /* Percentage text in centre */
     .donut-text {
         position: absolute;
         top: 50%; left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 1.15rem;
+        font-size: 1rem;
         font-weight: 800;
         color: #fff;
         text-align: center;
@@ -345,15 +347,15 @@ mysqli_close($conn);
     }
 
     .donut-name {
-        font-size: 0.78rem;
+        font-size: 0.7rem;
         font-weight: 700;
         color: rgba(255,255,255,0.85);
         text-align: center;
-        max-width: 110px;
-        line-height: 1.3;
+        line-height: 1.2;
+        word-break: break-word;
+        max-width: 100%;
     }
 
-    /* ── RE-TAKE button (bottom centre when assessed) ── */
     .retake-row {
         display: flex;
         justify-content: center;
@@ -365,11 +367,14 @@ mysqli_close($conn);
         .dash-sidebar { display: none; }
         .dash-main { padding: 20px 16px 80px; }
         .two-col { grid-template-columns: 1fr; }
+        .donut-item { width: 80px; }
+        .donut-wrap, .donut-wrap svg { width: 80px; height: 80px; }
     }
     @media (max-width: 600px) {
         .overview-card { flex-direction: column; align-items: flex-start; }
-        .donuts-row { gap: 20px; }
-        .donut-wrap, .donut-wrap svg { width: 90px; height: 90px; }
+        .donuts-row { gap: 8px; justify-content: center; width: 100%; }
+        .donut-item { width: 70px; }
+        .donut-wrap, .donut-wrap svg { width: 70px; height: 70px; }
         .welcome-section h1 { font-size: 1.6rem; }
     }
     </style>
@@ -377,16 +382,21 @@ mysqli_close($conn);
 <body>
 
 <?php
-    /* Shared navbar — shows user avatar + logout */
     $currentPage = 'dashboard.php';
     require_once __DIR__ . '/../shared/navbaroptional.php';
 ?>
 
 <div class="dash-layout">
 
-    <!-- ══ SIDEBAR ══════════════════════════════════════════ -->
     <aside class="dash-sidebar">
         <div class="sidebar-label">Navigation</div>
+
+        <a href="/future_finder/index.php" class="sidebar-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
+                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Home
+        </a>
 
         <a href="dashboard.php"  class="sidebar-item active">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round">
@@ -434,25 +444,21 @@ mysqli_close($conn);
             CV Generator
         </a>
 
-        <a href="profile.php" class="sidebar-item profile-item" style="margin-top:auto;">
+        <a href="profile.php" class="sidebar-item profile-item">
             <div class="s-avatar"><?= $initials ?: 'U' ?></div>
             My Profile
         </a>
     </aside>
 
-    <!-- ══ MAIN CONTENT ═════════════════════════════════════ -->
     <main class="dash-main">
 
-        <!-- Welcome -->
         <div class="welcome-section">
             <h1>Welcome Back, <span><?= $firstName ?></span> !</h1>
             <p>Here's your career guidance overview and progress.</p>
         </div>
 
-        <!-- ══ STATE 1: Assessment NOT done ════════════════ -->
         <?php if (!$assessed): ?>
 
-        <!-- Assessment Status: PENDING -->
         <div class="info-card" style="margin-bottom:16px;">
             <div class="status-card">
                 <div>
@@ -464,7 +470,6 @@ mysqli_close($conn);
             </div>
         </div>
 
-        <!-- Bottom two cards: Top Career + Roadmap (both locked) -->
         <div class="two-col">
             <div class="info-card">
                 <div class="card-label">Top Career Match</div>
@@ -479,15 +484,12 @@ mysqli_close($conn);
         </div>
 
         <?php else: ?>
-        <!-- ══ STATE 2: Assessment DONE ════════════════════ -->
 
-        <!-- Assessment Status: COMPLETED -->
         <div class="info-card" style="margin-bottom:16px;">
             <div class="card-label">Your Assessment Status</div>
             <div class="card-value completed">COMPLETED</div>
         </div>
 
-        <!-- Top Career + Roadmap -->
         <div class="two-col">
             <div class="info-card">
                 <div class="card-label">Top Career Match</div>
@@ -497,11 +499,16 @@ mysqli_close($conn);
             </div>
             <div class="info-card">
                 <div class="card-label">Roadmap Available</div>
-                <div class="card-value soon">SOON</div>
+                <?php if ($roadmapExists): ?>
+                    <div class="card-value yes">YES</div>
+                    <div class="card-sub"><a href="roadmap.php">View Roadmap →</a></div>
+                <?php else: ?>
+                    <div class="card-value no">NO</div>
+                    <div class="card-sub">No roadmap yet</div>
+                <?php endif; ?>
             </div>
         </div>
 
-        <!-- Career Match Overview with animated donuts -->
         <?php if (!empty($recommendations)): ?>
         <div class="overview-card" id="overviewCard">
             <div class="overview-label">Career<br>Match<br>Overview</div>
@@ -509,19 +516,14 @@ mysqli_close($conn);
                 <?php foreach ($recommendations as $i => $rec): ?>
                 <div class="donut-item">
                     <div class="donut-wrap">
-                        <!-- SVG donut chart — animated by JS -->
-                        <svg viewBox="0 0 110 110">
-                            <!-- Track circle -->
-                            <circle class="donut-track"
-                                    cx="55" cy="55" r="45"/>
-                            <!-- Progress circle — stroke-dashoffset animated in JS -->
+                        <svg viewBox="0 0 90 90">
+                            <circle class="donut-track" cx="45" cy="45" r="35"/>
                             <circle class="donut-progress"
-                                    cx="55" cy="55" r="45"
+                                    cx="45" cy="45" r="35"
                                     data-percent="<?= $rec['MatchScore'] ?>"
-                                    style="stroke-dasharray: <?= 2 * M_PI * 45 ?>;
-                                           stroke-dashoffset: <?= 2 * M_PI * 45 ?>;"/>
+                                    style="stroke-dasharray: <?= 2 * M_PI * 35 ?>;
+                                           stroke-dashoffset: <?= 2 * M_PI * 35 ?>;"/>
                         </svg>
-                        <!-- Percentage text in centre -->
                         <div class="donut-text" id="donut-text-<?= $i ?>">0%</div>
                     </div>
                     <div class="donut-name"><?= htmlspecialchars($rec['Title']) ?></div>
@@ -531,7 +533,6 @@ mysqli_close($conn);
         </div>
         <?php endif; ?>
 
-        <!-- RE-TAKE ASSESSMENT button -->
         <div class="retake-row">
             <a href="assessment.php" class="btn-teal">RE-TAKE ASSESSMENT</a>
         </div>
@@ -544,66 +545,40 @@ mysqli_close($conn);
 <?php require_once __DIR__ . '/../shared/footer.php'; ?>
 
 <script>
-// ============================================================
-// Dashboard JS — Animated donut charts
-// Uses IntersectionObserver to trigger animation when visible
-// ============================================================
-
 (function () {
-
-    /* All progress circles on the page */
     const circles = document.querySelectorAll('.donut-progress');
     if (!circles.length) return;
+    const CIRC = 2 * Math.PI * 35;
 
-    /* Circumference of each circle (r=45) */
-    const CIRC = 2 * Math.PI * 45;  /* ≈ 282.74 */
-
-    /* Animate a single donut from 0 to target % */
     function animateDonut(circle, textEl, targetPct) {
-        const duration = 1400;   /* ms — matches CSS transition */
-        const start    = performance.now();
-
+        const duration = 1400;
+        const start = performance.now();
         function step(now) {
-            const elapsed  = now - start;
+            const elapsed = now - start;
             const progress = Math.min(elapsed / duration, 1);
-
-            /* Ease-out cubic */
             const eased = 1 - Math.pow(1 - progress, 3);
             const current = targetPct * eased;
-
-            /* stroke-dashoffset: full circ = 0%, zero = 100% */
             circle.style.strokeDashoffset = CIRC - (CIRC * current / 100);
-
-            /* Update counter text */
             if (textEl) textEl.textContent = Math.round(current) + '%';
-
             if (progress < 1) requestAnimationFrame(step);
         }
-
         requestAnimationFrame(step);
     }
 
-    /* Use IntersectionObserver so animation fires when card scrolls into view */
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (!entry.isIntersecting) return;
             observer.unobserve(entry.target);
-
-            /* Animate each donut in the card */
             circles.forEach((circle, i) => {
-                const pct    = parseFloat(circle.dataset.percent) || 0;
+                const pct = parseFloat(circle.dataset.percent) || 0;
                 const textEl = document.getElementById('donut-text-' + i);
-
-                /* Small stagger so donuts animate one after another */
                 setTimeout(() => animateDonut(circle, textEl, pct), i * 180);
             });
         });
     }, { threshold: 0.3 });
 
-    /* Observe the overview card */
     const card = document.getElementById('overviewCard');
     if (card) observer.observe(card);
-
 })();
 </script>
 
