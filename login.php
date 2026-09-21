@@ -209,6 +209,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- General error (wrong password etc.) -->
                     <span class="error-msg" id="loginGeneralError"></span>
 
+                    <!-- Forgot Password link -->
+                    <a href="forgot_password.php" class="forgot-link">Forgot Password?</a>
+
                     <button type="submit" class="submit-btn">Login</button>
                 </form>
 
