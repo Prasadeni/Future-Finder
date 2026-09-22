@@ -129,6 +129,7 @@ if ($row = mysqli_fetch_assoc($result)) {
 mysqli_stmt_close($stmt);
 mysqli_close($conn);
 
+//encapsulation
 function getSaved($data, $key, $default = '') {
     return isset($data[$key]) ? htmlspecialchars($data[$key]) : $default;
 }
@@ -151,9 +152,7 @@ function getSavedNested($data, $key1, $key2, $index, $default = '') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
     <style>
-        /* ============================================================
-           CV GENERATOR — ENHANCED VERSION
-           ============================================================ */
+       
 
         * {
             margin: 0;
@@ -584,7 +583,7 @@ function getSavedNested($data, $key1, $key2, $index, $default = '') {
             margin-bottom: 12px;
         }
 
-        /* ── PRINT STYLES (FIXED) ── */
+        /* ── PRINT STYLES ── */
         @media print {
             /* Hide everything except the preview content's container chain */
             body > *:not(.cv-wrapper) {
