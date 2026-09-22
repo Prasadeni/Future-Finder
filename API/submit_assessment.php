@@ -42,9 +42,9 @@ if (!$stmtInsert) {
     exit;
 }
 
-
+// ─────────────────────────────────────────────────────────
 // 1) Accumulate career scores (only careers 1-15)
-
+// ─────────────────────────────────────────────────────────
 $careerScores = [];
 
 foreach ($answers as $ans) {
@@ -76,8 +76,6 @@ foreach ($answers as $ans) {
     // Add weighted points (only careers 1-15)
     foreach ($chosen['scores'] as $careerID => $points) {
         $careerID = intval($careerID);
-
-        // Limit recommendations to the original set (1-15)
         if ($careerID > 15) continue;
 
         if (!isset($careerScores[$careerID])) {
@@ -114,7 +112,15 @@ while ($r = mysqli_fetch_assoc($validRes)) {
 }
 
 // ─────────────────────────────────────────────────────────
-// 4) Save top 3 recommendations
+// 4) DELETE old recommendations for this assessment (prevent duplicates)
+// ─────────────────────────────────────────────────────────
+$delRec = mysqli_prepare($conn, "DELETE FROM Recommendations WHERE AssessmentID = ?");
+mysqli_stmt_bind_param($delRec, 'i', $AssessmentID);
+mysqli_stmt_execute($delRec);
+mysqli_stmt_close($delRec);
+
+// ─────────────────────────────────────────────────────────
+// 5) Save top 3 recommendations (only valid + unique career IDs)
 // ─────────────────────────────────────────────────────────
 $today = date('Y-m-d');
 $stmtRec = mysqli_prepare($conn, "INSERT INTO Recommendations (AssessmentID, CareerID, MatchScore, Date) VALUES (?, ?, ?, ?)");
@@ -124,21 +130,27 @@ if (!$stmtRec) {
 }
 
 $count = 0;
+$savedCareers = [];
+
 foreach ($careerScores as $CareerID => $MatchScore) {
     if ($count >= 3) break;
 
     // Skip career IDs that don't exist in Careers table
     if (!isset($validCareers[$CareerID])) continue;
 
+    // Skip if already saved (double-safety against duplicates)
+    if (isset($savedCareers[$CareerID])) continue;
+
     mysqli_stmt_bind_param($stmtRec, 'iids', $AssessmentID, $CareerID, $MatchScore, $today);
     mysqli_stmt_execute($stmtRec);
+    $savedCareers[$CareerID] = true;
     $count++;
 }
 mysqli_stmt_close($stmtRec);
 
-
-// 5) Mark assessment as completed
-
+// ─────────────────────────────────────────────────────────
+// 6) Mark assessment as completed
+// ─────────────────────────────────────────────────────────
 $completedAt = date('Y-m-d H:i:s');
 $totalScore = 0.00;
 $stmtUpd = mysqli_prepare($conn, "UPDATE Assessments SET Status='completed', TotalScore=?, CompletedDate=? WHERE AssessmentID=?");
@@ -147,8 +159,10 @@ if ($stmtUpd) {
     mysqli_stmt_execute($stmtUpd);
     mysqli_stmt_close($stmtUpd);
 }
-// 6) Return success
 
+// ─────────────────────────────────────────────────────────
+// 7) Return success
+// ─────────────────────────────────────────────────────────
 echo json_encode([
     'success' => true,
     'AssessmentID' => $AssessmentID,

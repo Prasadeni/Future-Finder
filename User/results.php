@@ -5,7 +5,7 @@ require_once '../Includes/db_connection.php';
 
 // Session guard: must be logged in to view any results
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.html');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -52,13 +52,17 @@ if ($userID !== (int)$assessment['UserID'] && ($_SESSION['role'] ?? 'user') !== 
 $firstName           = htmlspecialchars($assessment['first_name']);
 $assessmentOwnerName = htmlspecialchars(trim($assessment['first_name'] . ' ' . $assessment['last_name']));
 
-// Load recommendations
+// ─────────────────────────────────────────────────────────
+// Load recommendations — GROUP BY CareerID + LIMIT 3 (fixes duplicates)
+// ─────────────────────────────────────────────────────────
 $rSQL = "SELECT r.MatchScore, c.CareerID, c.Title, c.Description, c.SalaryRange,
                 c.Demand, c.Growth, c.RequiredEducation, c.Industry
          FROM Recommendations r
          JOIN Careers c ON r.CareerID = c.CareerID
          WHERE r.AssessmentID = ?
-         ORDER BY r.MatchScore DESC";
+         GROUP BY c.CareerID
+         ORDER BY r.MatchScore DESC
+         LIMIT 3";
 $rStmt = mysqli_prepare($conn, $rSQL);
 mysqli_stmt_bind_param($rStmt, 'i', $AssessmentID);
 mysqli_stmt_execute($rStmt);
@@ -67,6 +71,7 @@ $recommendations = [];
 while ($row = mysqli_fetch_assoc($rResult)) {
     $recommendations[] = $row;
 }
+mysqli_stmt_close($rStmt);
 
 // Load answers + questions for category score breakdown
 $ansSQL  = "SELECT q.QuestionID, q.Text, q.Category, a.SelectedOption
@@ -77,6 +82,7 @@ $ansStmt = mysqli_prepare($conn, $ansSQL);
 mysqli_stmt_bind_param($ansStmt, 'i', $AssessmentID);
 mysqli_stmt_execute($ansStmt);
 $ansResult = mysqli_fetch_all(mysqli_stmt_get_result($ansStmt), MYSQLI_ASSOC);
+mysqli_stmt_close($ansStmt);
 
 $qSQL = "SELECT QuestionID, Category, Weight, Options FROM Questions";
 $qRes = mysqli_query($conn, $qSQL);
@@ -97,7 +103,7 @@ foreach ($ansResult as $a) {
     $weight  = floatval($q['Weight']);
     $totalWeight += $weight;
     $opts = json_decode($q['Options'], true);
-    $idx  = array_search($a['SelectedOption'], $opts);
+    $idx  = array_search($a['SelectedOption'], array_column($opts, 'label'));
     if ($idx !== false && isset($optionCategoryMap[$idx])) {
         $categoryScores[$optionCategoryMap[$idx]] += $weight;
     }
@@ -117,6 +123,7 @@ if (!empty($recommendations)) {
     mysqli_stmt_bind_param($cStmt, 'i', $topCareerID);
     mysqli_stmt_execute($cStmt);
     $courses = mysqli_fetch_all(mysqli_stmt_get_result($cStmt), MYSQLI_ASSOC);
+    mysqli_stmt_close($cStmt);
 }
 
 mysqli_close($conn);
@@ -132,14 +139,12 @@ mysqli_close($conn);
 <body>
 
 <?php
-    
     $currentPage = 'results.php';
     require_once __DIR__ . '/../shared/navbaroptional.php';
 ?>
 
 <div class="wrapper">
 
-    
     <div class="hero">
 
         <!--Image -->
@@ -224,16 +229,16 @@ mysqli_close($conn);
         <div class="course-list">
             <?php foreach ($courses as $course): ?>
             <a href="<?= htmlspecialchars($course['URL']) ?>" target="_blank" rel="noopener" class="course-item">
-    <div class="course-icon">🎓</div>
-    <div style="flex:1">
-        <div class="course-title"><?= htmlspecialchars($course['Title']) ?></div>
-        <div class="course-provider"><?= htmlspecialchars($course['Provider']) ?></div>
-    </div>
-    <span class="course-badge <?= $course['IsFree'] ? 'badge-free' : 'badge-paid' ?>">
-        <?= $course['IsFree'] ? 'Free' : 'Paid' ?>
-    </span>
-    <div class="course-arrow">→</div>
-</a>
+                <div class="course-icon">🎓</div>
+                <div style="flex:1">
+                    <div class="course-title"><?= htmlspecialchars($course['Title']) ?></div>
+                    <div class="course-provider"><?= htmlspecialchars($course['Provider']) ?></div>
+                </div>
+                <span class="course-badge <?= $course['IsFree'] ? 'badge-free' : 'badge-paid' ?>">
+                    <?= $course['IsFree'] ? 'Free' : 'Paid' ?>
+                </span>
+                <div class="course-arrow">→</div>
+            </a>
             <?php endforeach; ?>
         </div>
     </div>
